@@ -36,12 +36,18 @@ def get_available_qualities(url: str):
             info = ydl.extract_info(url, download=False)
             formats = info.get('formats', [])
             qualities = []
-            # Ambil format video+audio mp4 progressive
+            seen_resolutions = set()
+
             for f in formats:
-                if f.get('vcodec') != 'none' and f.get('acodec') != 'none' and f.get('ext') == 'mp4':
+                if f.get('vcodec') != 'none' and f.get('ext') == 'mp4':
+                    # Gunakan resolution atau format_note
                     res = f.get('format_note') or f.get('resolution') or f.get('format_id')
-                    if res and res not in [q[0] for q in qualities]:
-                        qualities.append((res, f['format_id']))
+                    format_id = f.get('format_id')
+
+                    if res and format_id and res not in seen_resolutions:
+                        seen_resolutions.add(res)
+                        qualities.append((res, format_id))
+
             return qualities
     except Exception as e:
         print("Error getting qualities:", e)
@@ -58,6 +64,7 @@ def download_youtube(url: str, format_id=None, context=None, message=None) -> st
         'quiet': True,
         'noplaylist': True,
         'progress_hooks': [hook],
+        'merge_output_format': 'mp4',  # pastikan hasil gabungan berupa MP4
     }
     if format_id:
         ydl_opts['format'] = format_id

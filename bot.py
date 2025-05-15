@@ -11,7 +11,7 @@ from telegram.ext import (
     ContextTypes,
 )
 from downloader.youtube import download_youtube, get_available_qualities, is_shorts
-from downloader.tiktok import download_tiktok
+from downloader.tiktok import download_tiktok, download_tiktok_photo_gallery
 from downloader.instagram import download_instagram
 from config import BOT_TOKEN
 
@@ -55,26 +55,66 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_sessions.pop(chat_id)
 
         video_path = download_youtube(url_session, format_id=format_id, context=context, message=update.message)
+        print(f"Download complete: {video_path}")
         await send_video_file(update, context, video_path, url_session)
         return
 
     # Cek cache
     if url in video_cache:
+        capt = "Downloaded By @FreeVideoDownloderBot"
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
-        await context.bot.send_video(chat_id=chat_id, video=video_cache[url])
+        await context.bot.send_video(chat_id=chat_id, video=video_cache[url], caption=capt)
         return
 
     # TikTok
     if "tiktok.com" in url:
-        await context.bot.send_message(chat_id=chat_id, text="🔄 TikTok video terdeteksi, sedang mengunduh...")
-        video_path = download_tiktok(url)
-        await send_video_file(update, context, video_path, url)
+        if "/photo/" in url:
+            # Proses khusus galeri foto/slideshow TikTok
+            await update.message.reply_text("📷 Terdeteksi galeri foto TikTok, sedang mengunduh gambar...")
+
+            # Implementasi khusus untuk galeri foto (misal scrape manual atau API lain)
+            images = await download_tiktok_photo_gallery(url)
+            if not images:
+                await update.message.reply_text("❌ Gagal mengunduh foto dari galeri TikTok.")
+                return
+
+            for img_path in images:
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+                with open(img_path, "rb") as f:
+                    await context.bot.send_photo(chat_id=chat_id, photo=f)
+                os.remove(img_path)
+            print("Download complete: TikTok photo gallery")
+            return
+
+        else:
+            # Proses unduh video TikTok biasa pakai yt-dlp
+            await context.bot.send_message(chat_id=chat_id, text="🔄 TikTok media terdeteksi, sedang mengunduh...")
+            try:
+                media_type, result = await asyncio.to_thread(download_tiktok, url)
+            except Exception as e:
+                print("Error saat download_tiktok:", e)
+                await context.bot.send_message(chat_id=chat_id, text=f"❌ Terjadi error saat mengunduh TikTok: {e}")
+                return
+
+        if media_type == "video":
+            await send_video_file(update, context, result, url=url)
+        elif media_type == "images":
+            await update.message.reply_text("📷 Slideshow terdeteksi, mengirim foto satu per satu...")
+            for img_path in result:
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+                with open(img_path, 'rb') as img:
+                    await context.bot.send_photo(chat_id=chat_id, photo=img)
+                os.remove(img_path)
+            print("Download complete: TikTok slideshow")
+        else:
+            await context.bot.send_message(chat_id=chat_id, text="❌ Gagal mengunduh dari TikTok.")
         return
 
     # Instagram
     if "instagram.com" in url:
         await context.bot.send_message(chat_id=chat_id, text="🔄 Instagram terdeteksi, sedang mengunduh...")
         video_path = download_instagram(url)
+        print(f"Download complete: {video_path}")
         await send_video_file(update, context, video_path, url)
         return
 
@@ -83,29 +123,30 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if is_shorts(url):
             await context.bot.send_message(chat_id=chat_id, text="🔄 YouTube Shorts terdeteksi, langsung mengunduh video...")
             video_path = download_youtube(url, context=context, message=update.message)
+            print(f"Download complete: {video_path}")
             await send_video_file(update, context, video_path, url)
         else:
             qualities = get_available_qualities(url)
             if not qualities:
-                await update.message.reply_text("❌ Tidak dapat mengambil kualitas video.")
+                await context.bot.send_message(chat_id=chat_id, text="❌ Tidak bisa mengambil daftar kualitas dari video.")
                 return
-
+        
+            # Simpan sesi agar user bisa memilih
             user_sessions[chat_id] = {
                 "await_quality": True,
                 "qualities": qualities,
                 "url": url,
             }
-
-            msg = "Silahkan pilih kualitas video dengan mengirim nomor atau resolusi:\n"
-            for i, (label, _) in enumerate(qualities, start=1):
-                msg += f"{i}. {label}\n"
-            await update.message.reply_text(msg)
+        
+            quality_list = "\n".join([f"{i+1}. {q[0]}" for i, q in enumerate(qualities)])
+            await context.bot.send_message(chat_id=chat_id, text=f"📺 Video YouTube terdeteksi.\nPilih kualitas yang diinginkan:\n\n{quality_list}\n\nKirim nomor atau teks (misal: 1 atau 360p)")
         return
 
     await update.message.reply_text("Silahkan kirimkan URL video yang akan didownload")
 
 async def send_video_file(update: Update, context: ContextTypes.DEFAULT_TYPE, video_path: str, url: str = None):
     chat_id = update.effective_chat.id
+    capt = "Downloaded By @FreeVideoDownloderBot"
 
     if not video_path:
         await context.bot.send_message(chat_id=chat_id, text="❌ Gagal mengunduh video.")
@@ -118,11 +159,19 @@ async def send_video_file(update: Update, context: ContextTypes.DEFAULT_TYPE, vi
         file_size = os.path.getsize(video_path)
         with open(video_path, "rb") as f:
             if file_size <= 20 * 1024 * 1024:
-                msg = await context.bot.send_video(chat_id=chat_id, video=f)
+                msg = await context.bot.send_video(
+                    chat_id=chat_id,
+                    video=f,
+                    caption=capt
+                )
                 if url:
                     video_cache[url] = msg.video.file_id
             else:
-                msg = await context.bot.send_document(chat_id=chat_id, document=f)
+                msg = await context.bot.send_document(
+                    chat_id=chat_id,
+                    document=f,
+                    caption=capt
+                )
                 if url and msg.document:
                     video_cache[url] = msg.document.file_id
         video_sent = True
@@ -135,12 +184,13 @@ async def send_video_file(update: Update, context: ContextTypes.DEFAULT_TYPE, vi
             await context.bot.send_message(chat_id=chat_id, text="❌ Gagal mengirim video.")
     finally:
         os.remove(video_path)
+        print("Video Sent!")
 
 def main():
     request = HTTPXRequest(
         connect_timeout=10.0,
-        read_timeout=300.0,
-        write_timeout=300.0,
+        read_timeout=600.0,
+        write_timeout=600.0,
         pool_timeout=60.0,
     )
 
@@ -153,3 +203,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
