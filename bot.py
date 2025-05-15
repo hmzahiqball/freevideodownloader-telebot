@@ -10,6 +10,7 @@ from telegram.ext import (
     ContextTypes,
 )
 from downloader.youtube import download_youtube, get_available_qualities, is_shorts
+from downloader.tiktok import download_tiktok
 from config import BOT_TOKEN
 import asyncio
 
@@ -57,11 +58,19 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_video_file(update, context, video_path)
         return
 
+    # TikTok: langsung unduh dan kirim
+    if "tiktok.com" in url:
+        await context.bot.send_message(chat_id=chat_id, text="🔄 TikTok video terdeteksi, sedang mengunduh...")
+        video_path = download_tiktok(url)
+
+        await send_video_file(update, context, video_path)
+        return
+
     # Jika bukan sesi pemilihan kualitas, proses URL baru
     if "youtube.com" in url or "youtu.be" in url:
         if is_shorts(url):
             # Shorts langsung download tanpa pilih kualitas
-            await context.bot.send_message(chat_id=chat_id, text="YouTube Shorts terdeteksi, langsung mengunduh video...")
+            await context.bot.send_message(chat_id=chat_id, text="🔄 YouTube Shorts terdeteksi, langsung mengunduh video...")
             video_path = download_youtube(url, context=context, message=update.message)
             await send_video_file(update, context, video_path)
         else:
