@@ -8,9 +8,10 @@ def download_tiktok(url: str) -> str:
 
     ydl_opts = {
         'outtmpl': filepath,
-        'format': 'mp4',
+        'format': 'bestvideo+bestaudio/best',
         'quiet': True,
         'noplaylist': True,
+        'merge_output_format': 'mp4',
     }
 
     try:
