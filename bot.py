@@ -11,6 +11,7 @@ from telegram.ext import (
 )
 from downloader.youtube import download_youtube, get_available_qualities, is_shorts
 from downloader.tiktok import download_tiktok
+from downloader.instagram import download_instagram
 from config import BOT_TOKEN
 import asyncio
 
@@ -65,6 +66,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await send_video_file(update, context, video_path)
         return
+    
+    # Instagram: langsung unduh dan kirim
+    if "instagram.com" in url:
+        await context.bot.send_message(chat_id=chat_id, text="🔄 Instagram terdeteksi, sedang mengunduh...")
+        video_path = download_instagram(url)
+        await send_video_file(update, context, video_path)
 
     # Jika bukan sesi pemilihan kualitas, proses URL baru
     if "youtube.com" in url or "youtu.be" in url:
@@ -91,7 +98,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 msg += f"{i}. {label}\n"
             await update.message.reply_text(msg)
     else:
-        await update.message.reply_text("Silahkan kirimkan URL video YouTube yang akan didownload")
+        await update.message.reply_text("Silahkan kirimkan URL video yang akan didownload")
 
 async def send_video_file(update: Update, context: ContextTypes.DEFAULT_TYPE, video_path: str):
     chat_id = update.effective_chat.id
