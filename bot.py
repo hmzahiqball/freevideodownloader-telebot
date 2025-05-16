@@ -186,7 +186,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for path in file_paths:
             if path.endswith(".mp4"):
                 await send_video_file(update, context, path, url=None)
-            elif path.endswith(".jpg"):
+            elif path.endswith((".jpg", ".jpeg", ".png")):
                 await send_photo_file(update, context, path, url=None)
             else:
                 await update.message.reply_text(f"File tidak dikenali: {path}")
