@@ -1,6 +1,7 @@
 import os
 import asyncio
 import json
+from pathlib import Path
 from telegram import Update
 from telegram.constants import ChatAction
 from telegram.request import HTTPXRequest
@@ -154,10 +155,21 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Instagram
     if "instagram.com" in url:
         await update.message.reply_text(t("instagram_detected", chat_id=chat_id))
-        video_path = download_instagram(url)
-        await send_video_file(update, context, video_path, url)
-        return
+        file_paths = await asyncio.to_thread(download_instagram, url)
 
+        if not file_paths:
+            await update.message.reply_text(t("download_failed", chat_id=chat_id))
+            return
+
+        for path in file_paths:
+            if path.endswith(".mp4"):
+                await send_video_file(update, context, path, url=None)
+            elif path.endswith(".jpg"):
+                await send_photo_file(update, context, path, url=None)
+            else:
+                await update.message.reply_text(f"File tidak dikenali: {path}")
+        return
+    
     # YouTube
     if "youtube.com" in url or "youtu.be" in url:
         if is_shorts(url):
@@ -183,7 +195,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(t("ask_url", chat_id=chat_id))
 
 
-# --- File Sender ---
+# --- Video Sender ---
 async def send_video_file(update: Update, context: ContextTypes.DEFAULT_TYPE, video_path: str, url: str = None):
     chat_id = update.effective_chat.id
     capt = "Downloaded By @FreeVideoDownloderBot"
@@ -192,13 +204,17 @@ async def send_video_file(update: Update, context: ContextTypes.DEFAULT_TYPE, vi
         await update.message.reply_text(t("download_failed", chat_id=chat_id))
         return
 
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
 
+    file_ext = Path(video_path).suffix.lower()
     file_size = os.path.getsize(video_path)
 
     with open(video_path, "rb") as f:
         try:
-            if file_size <= 20 * 1024 * 1024:
+            if file_ext in [".jpg", ".jpeg", ".png"]:
+                msg = await context.bot.send_photo(chat_id=chat_id, photo=f, caption=capt)
+                media_type = "photo"
+            elif file_size <= 20 * 1024 * 1024:
                 msg = await context.bot.send_video(chat_id=chat_id, video=f, caption=capt)
                 media_type = "video"
             else:
@@ -209,15 +225,46 @@ async def send_video_file(update: Update, context: ContextTypes.DEFAULT_TYPE, vi
             await update.message.reply_text(t("send_failed", chat_id=chat_id))
             return
 
-    # Simpan cache
-    if url and msg and (msg.video or msg.document):
-        file_id = (media_type, (msg.video or msg.document).file_id)
+    if url and msg and (msg.photo or msg.video or msg.document):
+        file_id = (media_type, (msg.video or msg.document or msg.photo[-1]).file_id)
         video_cache[url] = file_id
+
+    print(f"Video Sent {video_path}")
 
     try:
         os.remove(video_path)
     except Exception as e:
         print("Failed to remove file:", e)
+
+# --- Photo Sender ---
+async def send_photo_file(update: Update, context: ContextTypes.DEFAULT_TYPE, photo_path: str, url: str = None):
+    chat_id = update.effective_chat.id
+    capt = "Downloaded By @FreeVideoDownloderBot"
+
+    if not photo_path or not os.path.exists(photo_path):
+        await update.message.reply_text(t("download_failed", chat_id=chat_id))
+        return
+
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+
+    with open(photo_path, "rb") as f:
+        try:
+            msg = await context.bot.send_photo(chat_id=chat_id, photo=f, caption=capt)
+        except Exception as e:
+            print("Telegram send photo error:", e)
+            await update.message.reply_text(t("send_failed", chat_id=chat_id))
+            return
+
+    if url and msg and msg.photo:
+        file_id = ("photo", msg.photo[-1].file_id)
+        video_cache[url] = file_id
+
+    print(f"Photo Sent {photo_path}")
+
+    try:
+        os.remove(photo_path)
+    except Exception as e:
+        print("Failed to remove photo file:", e)
 
 
 # --- Entry Point ---
