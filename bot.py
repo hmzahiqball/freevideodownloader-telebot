@@ -130,6 +130,8 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             media_type, fid = file_id
             if media_type == "video":
                 await context.bot.send_video(chat_id=chat_id, video=fid, caption=capt)
+            elif media_type == "photo":
+                await context.bot.send_photo(chat_id=chat_id, photo=fid, caption=capt)
             else:
                 await context.bot.send_document(chat_id=chat_id, document=fid, caption=capt)
         except Exception as e:
@@ -147,7 +149,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             print("Download X error:", e)
             await update.message.reply_text(t("x_download_error", chat_id=chat_id))
             return
-    
+
         if media_type == "video":
             await send_video_file(update, context, result, url)
         elif media_type == "photo":
