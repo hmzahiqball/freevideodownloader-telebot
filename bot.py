@@ -31,7 +31,14 @@ AVAILABLE_LANGUAGES = {
     "English": "en",
     "Indonesia": "id",
     "Español": "es",
-    "Français": "fr"
+    "Français": "fr",
+    "Germany": "de",
+    "Portuguese": "pt",
+    "Russian": "ru",
+    "Korean": "ko",
+    "Chinese": "zh",
+    "Japanese": "ja",
+    "Arabic": "ar"
 }
 
 user_languages = {}  # chat_id -> lang_code
