@@ -15,7 +15,9 @@
     "youtube_quality_fetch_failed": "❌ Tidak bisa mengambil daftar kualitas dari video.",
     "youtube_quality_selection": "📺 Video YouTube terdeteksi.\nPilih kualitas yang diinginkan:\n\n{quality_list}\n\nKirim nomor atau teks (misal: 1 atau 360p)",
     "download_failed": "❌ Gagal mengunduh video.",
-    "send_failed": "❌ Gagal mengirim video."
+    "send_failed": "❌ Gagal mengirim video.",
+    "language_set": "✅ Bahasa telah diatur ke Bahasa Indonesia.",
+    "language_usage": "Pilih bahasa dengan mengirim perintah seperti /lang id"
   },
   "en": {
     "ask_url": "Please send the video URL to download",
@@ -33,7 +35,9 @@
     "youtube_quality_fetch_failed": "❌ Failed to retrieve video quality list.",
     "youtube_quality_selection": "📺 YouTube video detected.\nChoose the desired quality:\n\n{quality_list}\n\nSend number or text (e.g., 1 or 360p)",
     "download_failed": "❌ Failed to download video.",
-    "send_failed": "❌ Failed to send video."
+    "send_failed": "❌ Failed to send video.",
+    "language_set": "✅ Language has been set to English.",
+    "language_usage": "Choose language by sending a command like /lang en"
   },
   "es": {
     "ask_url": "Por favor, envía la URL del video para descargar",
@@ -51,7 +55,9 @@
     "youtube_quality_fetch_failed": "❌ No se pudo obtener la lista de calidades del video.",
     "youtube_quality_selection": "📺 Video de YouTube detectado.\nElige la calidad deseada:\n\n{quality_list}\n\nEnvía número o texto (ej: 1 o 360p)",
     "download_failed": "❌ Error al descargar el video.",
-    "send_failed": "❌ Error al enviar el video."
+    "send_failed": "❌ Error al enviar el video.",
+    "language_set": "✅ El idioma se ha configurado a Español.",
+    "language_usage": "Elige el idioma enviando un comando como /lang es"
   },
   "fr": {
     "ask_url": "Veuillez envoyer l'URL de la vidéo à télécharger",
@@ -69,7 +75,9 @@
     "youtube_quality_fetch_failed": "❌ Impossible d'obtenir la liste des qualités de la vidéo.",
     "youtube_quality_selection": "📺 Vidéo YouTube détectée.\nChoisissez la qualité souhaitée :\n\n{quality_list}\n\nEnvoyez un numéro ou un texte (ex : 1 ou 360p)",
     "download_failed": "❌ Échec du téléchargement de la vidéo.",
-    "send_failed": "❌ Échec de l'envoi de la vidéo."
+    "send_failed": "❌ Échec de l'envoi de la vidéo.",
+    "language_set": "✅ La langue a été définie sur le Français.",
+    "language_usage": "Choisissez la langue en envoyant une commande comme /lang fr"
   },
   "de": {
     "ask_url": "Bitte sende die Video-URL zum Herunterladen",
@@ -87,7 +95,9 @@
     "youtube_quality_fetch_failed": "❌ Qualität der Videoliste konnte nicht abgerufen werden.",
     "youtube_quality_selection": "📺 YouTube-Video erkannt.\nWähle die gewünschte Qualität:\n\n{quality_list}\n\nSende Nummer oder Text (z. B. 1 oder 360p)",
     "download_failed": "❌ Fehler beim Herunterladen des Videos.",
-    "send_failed": "❌ Fehler beim Senden des Videos."
+    "send_failed": "❌ Fehler beim Senden des Videos.",
+    "language_set": "✅ Die Sprache wurde auf Deutsch eingestellt.",
+    "language_usage": "Wähle die Sprache durch Senden eines Befehls wie /lang de"
   },
   "pt": {
     "ask_url": "Por favor, envie a URL do vídeo para baixar",
@@ -105,24 +115,30 @@
     "youtube_quality_fetch_failed": "❌ Não foi possível obter a lista de qualidades do vídeo.",
     "youtube_quality_selection": "📺 Vídeo do YouTube detectado.\nEscolha a qualidade desejada:\n\n{quality_list}\n\nEnvie o número ou texto (ex: 1 ou 360p)",
     "download_failed": "❌ Falha ao baixar o vídeo.",
-    "send_failed": "❌ Falha ao enviar o vídeo."
+    "send_failed": "❌ Falha ao enviar o vídeo.",
+    "language_set": "✅ O idioma foi definido para Português.",
+    "language_usage": "Escolha o idioma enviando um comando como /lang pt"
   },
   "ru": {
-    "ask_url": "Пожалуйста, отправьте URL-адрес видео для загрузки.",
+    "ask_url": "Пожалуйста, отправьте ссылку на видео для загрузки.",
     "invalid_choice_number": "Неверный выбор, пожалуйста, отправьте правильный номер.",
-    "invalid_choice_quality": "Неверный выбор, пожалуйста, отправьте соответствующее количество или качество.",
-    "start_download_quality": "Начните загрузку видео в этом качестве...",
-    "tiktok_gallery_detected": "📷 Обнаружена фотогалерея TikTok, в настоящее время загружаются изображения...",
+    "invalid_choice_quality": "Неверный выбор, пожалуйста, отправьте номер или качество.",
+    "start_download_quality": "Начинаю загрузку видео в качестве {choice}...",
+    "tiktok_gallery_detected": "📷 Обнаружена галерея фотографий TikTok, загружаю изображения...",
     "tiktok_gallery_failed": "❌ Не удалось загрузить фотографии из галереи TikTok.",
-    "tiktok_media_detected": "🔄 Обнаружены медиафайлы TikTok, идет загрузка...",
-    "tiktok_download_error": "❌ Произошла ошибка при загрузке TikTok, попробуйте еще раз",
-    "tiktok_slideshow_detected": "📷 Обнаружено слайд-шоу, фотографии отправляются по одной...",
-    "tiktok_failed": "❌ Не удалось загрузить с TikTok.",
-    "instagram_detected": "🔄 Instagram обнаружен, скачивание...",
-    "youtube_shorts_detected": "🔄 Обнаружены короткие видео YouTube, скачайте видео немедленно...",
-    "youtube_quality_fetch_failed": "❌ Невозможно получить список качества из видео.",
-    "youtube_quality_selection": "📺 Обнаружено видео на YouTube.\nВыберите желаемое качество:\n\n{quality_list}\n\nОтправить номер или текст (например: 1 или 360p)",
+    "tiktok_media_detected": "🔄 Обнаружен медиафайл TikTok, загружаю...",
+    "tiktok_download_error": "❌ Произошла ошибка при загрузке с TikTok, попробуйте снова.",
+    "tiktok_slideshow_detected": "📷 Обнаружено слайд-шоу, отправляю фото по одному...",
+    "tiktok_failed": "❌ Не удалось загрузить видео с TikTok.",
+    "instagram_detected": "🔄 Обнаружен Instagram, загружаю...",
+    "youtube_shorts_detected": "🔄 Обнаружены YouTube Shorts, начинаю загрузку видео...",
+    "youtube_quality_fetch_failed": "❌ Не удалось получить список доступных качеств видео.",
+    "youtube_quality_selection": "📺 Обнаружено видео на YouTube.\nВыберите нужное качество:\n\n{quality_list}\n\nОтправьте номер или текст (например: 1 или 360p)",
     "download_failed": "❌ Не удалось загрузить видео.",
-    "send_failed": "❌ Не удалось отправить видео."
+    "send_failed": "❌ Не удалось отправить видео.",
+    "language_set": "✅ Язык был установлен на Русский.",
+    "language_usage": "Выберите язык, отправив команду, например /lang ru"
   }
 }
+
+
