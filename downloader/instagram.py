@@ -4,9 +4,13 @@ import uuid
 import subprocess
 import glob
 import shutil
+import hashlib
+
+def get_url_hash(url: str) -> str:
+    return hashlib.md5(url.encode()).hexdigest()
 
 def download_instagram(url: str) -> list:
-    session_dir = os.path.join("downloads", str(uuid.uuid4()))
+    session_dir = os.path.join("downloads", get_url_hash(url))
     os.makedirs(session_dir, exist_ok=True)
 
     # 1. Coba pakai yt-dlp (untuk video)

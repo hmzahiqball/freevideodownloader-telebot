@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 from telegram.constants import ChatAction
+import asyncio
+from telegram.error import RetryAfter
 
 async def send_video_file(update, context, video_path: str, url: str = None, video_cache=None, t=None):
     chat_id = update.effective_chat.id
@@ -26,6 +28,10 @@ async def send_video_file(update, context, video_path: str, url: str = None, vid
             else:
                 msg = await context.bot.send_document(chat_id=chat_id, document=f, caption=capt)
                 media_type = "document"
+        except (asyncio.TimeoutError, RetryAfter) as e:
+            # Jangan kirim pesan ke user jika timeout/retry after
+            print(f"Timeout or flood limit hit while sending media: {e}")
+            return
         except Exception as e:
             print("Telegram send error:", e)
             await update.message.reply_text(t("send_failed", chat_id=chat_id))
@@ -39,5 +45,9 @@ async def send_video_file(update, context, video_path: str, url: str = None, vid
 
     try:
         os.remove(video_path)
+        # Bersihkan folder jika kosong
+        parent_dir = os.path.dirname(video_path)
+        if os.path.isdir(parent_dir) and not os.listdir(parent_dir):
+            os.rmdir(parent_dir)
     except Exception as e:
         print("Failed to remove file:", e)
