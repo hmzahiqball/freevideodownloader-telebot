@@ -2,7 +2,7 @@ import os
 import asyncio
 import json
 from pathlib import Path
-from telegram import Update
+from telegram import Update, InputMediaPhoto
 from telegram.constants import ChatAction
 from telegram.request import HTTPXRequest
 from telegram.ext import (
@@ -183,13 +183,33 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(t("download_failed", chat_id=chat_id))
             return
 
-        for path in file_paths:
-            if path.endswith(".mp4"):
+        # Filter hanya gambar
+        image_paths = [f for f in file_paths if f.lower().endswith((".jpg", ".jpeg", ".png"))]
+        video_paths = [f for f in file_paths if f.lower().endswith(".mp4")]
+
+        # Kirim video jika ada
+        if video_paths:
+            for path in video_paths:
                 await send_video_file(update, context, path, url=None)
-            elif path.endswith((".jpg", ".jpeg", ".png")):
-                await send_photo_file(update, context, path, url=None)
+
+        # Kirim foto (jika lebih dari satu, kirim sebagai album)
+        if image_paths:
+            image_paths.sort(key=lambda x: os.path.getctime(x))
+        
+            if len(image_paths) == 1:
+                await send_photo_file(update, context, image_paths[0], url=url)
             else:
-                await update.message.reply_text(f"File tidak dikenali: {path}")
+                media_group = []
+                for i, path in enumerate(image_paths):
+                    with open(path, 'rb') as img_file:
+                        if i == 0:
+                            media_group.append(InputMediaPhoto(img_file, caption=t("Downloaded By @FreeVideoDownloderBot", chat_id=chat_id)))
+                        else:
+                            media_group.append(InputMediaPhoto(img_file))
+                msgs = await update.message.reply_media_group(media=media_group)
+                if url and msgs:
+                    file_id = ("photo", msgs[0].photo[-1].file_id)
+                    video_cache[url] = file_id
         return
     
     # YouTube
