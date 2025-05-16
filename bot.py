@@ -16,6 +16,7 @@ from telegram.ext import (
 from downloader.youtube import download_youtube, get_available_qualities, is_shorts
 from downloader.tiktok import download_tiktok
 from downloader.instagram import download_instagram
+from downloader.x import download_x
 from config import BOT_TOKEN
 
 # --- Setup ---
@@ -135,6 +136,25 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             print("Error kirim cached file:", e)
             video_cache.pop(url, None)
             await update.message.reply_text(t("download_failed", chat_id=chat_id))
+        return
+    
+    # X (Twitter)
+    if "twitter.com" in url or "x.com" in url:
+        await update.message.reply_text(t("x_media_detected", chat_id=chat_id))
+        try:
+            media_type, result = await asyncio.to_thread(download_x, url)
+        except Exception as e:
+            print("Download X error:", e)
+            await update.message.reply_text(t("x_download_error", chat_id=chat_id))
+            return
+    
+        if media_type == "video":
+            await send_video_file(update, context, result, url)
+        elif media_type == "photo":
+            await send_photo_file(update, context, result, url)
+        else:
+            # fallback kirim sebagai dokumen jika format gak dikenali
+            await context.bot.send_document(chat_id=chat_id, document=open(result, "rb"))
         return
 
     # TikTok
