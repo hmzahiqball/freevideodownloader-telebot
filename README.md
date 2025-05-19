@@ -53,8 +53,8 @@
 Clone the repo:
 
 ```bash
-git clone https://github.com/hmzahiqball/videodownloader-telebot.git
-cd videodownloader-telebot
+git clone https://github.com/hmzahiqball/freevideodownloader-telebot.git
+cd freevideodownloader-telebot
 ```
 
 Install requirements:
