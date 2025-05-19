@@ -15,10 +15,10 @@ from telegram.ext import (
 )
 from downloader.youtube import download_youtube, get_available_qualities, is_shorts
 from downloader.tiktok import download_tiktok
-from downloader.instagram import download_instagram
+from downloader.instagram import download_instagram, convert_webp_to_jpg
 from downloader.x import download_x
 from senders.video_sender import send_video_file
-from senders.photo_sender import send_photo_file
+from senders.photo_sender import send_photo_file, cleanup_empty_dirs
 from config import BOT_TOKEN
 
 # --- Setup ---
@@ -179,40 +179,68 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Instagram
     if "instagram.com" in url:
         await update.message.reply_text(t("instagram_detected", chat_id=chat_id))
-        file_paths = await asyncio.to_thread(download_instagram, url)
+        try:
+            file_paths = await asyncio.to_thread(download_instagram, url)
 
-        if not file_paths:
-            await update.message.reply_text(t("download_failed", chat_id=chat_id))
-            return
+            if not file_paths:
+                await update.message.reply_text(t("download_failed", chat_id=chat_id))
+                return
 
-        # Filter hanya gambar
-        image_paths = [f for f in file_paths if f.lower().endswith((".jpg", ".jpeg", ".png"))]
-        video_paths = [f for f in file_paths if f.lower().endswith(".mp4")]
+            # Filter hanya gambar
+            image_paths = [f for f in file_paths if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))]
+            video_paths = [f for f in file_paths if f.lower().endswith(".mp4")]
 
-        # Kirim video jika ada
-        if video_paths:
-            for path in video_paths:
-                await send_video_file(update, context, path, url=None)
+            # Kirim video jika ada
+            if video_paths:
+                for path in video_paths:
+                    await send_video_file(update, context, path, url=None)
 
-        # Kirim foto (jika lebih dari satu, kirim sebagai album)
-        if image_paths:
-            image_paths.sort(key=lambda x: os.path.getctime(x))
-        
-            if len(image_paths) == 1:
-                await send_photo_file(update, context, image_paths[0], url=url)
-            else:
-                media_group = []
-                for i, path in enumerate(image_paths):
-                    with open(path, 'rb') as img_file:
+            # Kirim foto (jika lebih dari satu, kirim sebagai album)
+            if image_paths:
+                # Ubah .webp ke .jpg agar bisa dikirim
+                new_image_paths = []
+                for path in image_paths:
+                    if path.lower().endswith(".webp"):
+                        try:
+                            new_path = convert_webp_to_jpg(path)
+                            new_image_paths.append(new_path)
+                        except Exception as e:
+                            print(f"Gagal konversi {path}: {e}")
+                    else:
+                        new_image_paths.append(path)
+                image_paths = new_image_paths
+
+                image_paths.sort(key=lambda x: os.path.getctime(x))
+
+                if len(image_paths) == 1:
+                    await send_photo_file(update, context, image_paths[0], url=url)
+                else:
+                    media_group = []
+                    temp_files = []
+                    
+                    for i, path in enumerate(image_paths):
+                        f = open(path, 'rb')
+                        temp_files.append((f, path))
                         if i == 0:
-                            media_group.append(InputMediaPhoto(img_file, caption=t("Downloaded By @FreeVideoDownloderBot", chat_id=chat_id)))
+                            media_group.append(InputMediaPhoto(f, caption=t("Downloaded By @FreeVideoDownloderBot", chat_id=chat_id)))
                         else:
-                            media_group.append(InputMediaPhoto(img_file))
-                msgs = await update.message.reply_media_group(media=media_group)
-                if url and msgs:
-                    file_id = ("photo", msgs[0].photo[-1].file_id)
-                    video_cache[url] = file_id
-        return
+                            media_group.append(InputMediaPhoto(f))
+                    
+                    msgs = await update.message.reply_media_group(media=media_group)
+                    
+                    # Tutup file & hapus
+                    for f, path in temp_files:
+                        try:
+                            f.close()
+                            os.remove(path)
+                            cleanup_empty_dirs(os.path.dirname(path), stop_at="downloads")
+                        except Exception as e:
+                            print(f"Gagal hapus {path}: {e}")
+            return
+        except Exception as e:
+            print("Download Instagram error:", e)
+            await update.message.reply_text(t("instagram_download_error", chat_id=chat_id))
+            return
     
     # YouTube
     if "youtube.com" in url or "youtu.be" in url:
