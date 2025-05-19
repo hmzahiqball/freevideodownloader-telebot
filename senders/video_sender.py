@@ -12,7 +12,7 @@ async def send_video_file(update, context, video_path: str, url: str = None, vid
         await update.message.reply_text(t("download_failed", chat_id=chat_id))
         return
 
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
 
     file_ext = Path(video_path).suffix.lower()
     file_size = os.path.getsize(video_path)
@@ -37,17 +37,29 @@ async def send_video_file(update, context, video_path: str, url: str = None, vid
             await update.message.reply_text(t("send_failed", chat_id=chat_id))
             return
 
-    if url and msg and (msg.photo or msg.video or msg.document) and video_cache is not None:
-        file_id = (media_type, (msg.video or msg.document or msg.photo[-1]).file_id)
+    if url and msg and video_cache is not None:
+        if msg.video:
+            file_id = ("video", msg.video.file_id)
+        elif msg.document:
+            file_id = ("document", msg.document.file_id)
+        elif msg.photo:
+            file_id = ("photo", msg.photo[-1].file_id)  # Use largest photo size
+        else:
+            return
+            
         video_cache[url] = file_id
+        print("File disimpan di cache")  # Added print statement
 
     print(f"Video Sent {video_path}")
 
     try:
-        os.remove(video_path)
-        # Bersihkan folder jika kosong
-        parent_dir = os.path.dirname(video_path)
-        if os.path.isdir(parent_dir) and not os.listdir(parent_dir):
-            os.rmdir(parent_dir)
+        if os.path.exists(video_path):
+            os.remove(video_path)
+            # Bersihkan folder induk jika kosong
+            dir_path = os.path.dirname(video_path)
+            if (dir_path != "downloads" and  # Jangan hapus folder downloads utama
+                os.path.exists(dir_path) and 
+                not os.listdir(dir_path)):
+                os.rmdir(dir_path)
     except Exception as e:
         print("Failed to remove file:", e)

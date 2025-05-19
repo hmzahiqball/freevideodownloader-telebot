@@ -120,7 +120,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_sessions.pop(chat_id)
 
         video_path = download_youtube(url_session, format_id=format_id, context=context, message=update.message)
-        await send_video_file(update, context, video_path, url_session)
+        await send_video_file(update, context, video_path, url_session, video_cache=video_cache, t=t)
         return
 
     # Cek cache
@@ -129,17 +129,31 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         capt = "Downloaded By @FreeVideoDownloderBot"
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
         try:
-            media_type, fid = file_id
-            if media_type == "video":
-                await context.bot.send_video(chat_id=chat_id, video=fid, caption=capt)
-            elif media_type == "photo":
-                await context.bot.send_photo(chat_id=chat_id, photo=fid, caption=capt)
+            if isinstance(file_id, tuple):
+                # Kalau cache simpan (type, file_id)
+                media_type, fid = file_id
+                if media_type == "video":
+                    await context.bot.send_video(chat_id=chat_id, video=fid, caption=capt)
+                elif media_type == "photo":
+                    await context.bot.send_photo(chat_id=chat_id, photo=fid, caption=capt)
+                else:
+                    await context.bot.send_document(chat_id=chat_id, document=fid, caption=capt)
             else:
-                await context.bot.send_document(chat_id=chat_id, document=fid, caption=capt)
+                # Cache lama, asumsi video
+                if media_type == "video":
+                    await context.bot.send_video(chat_id=chat_id, video=fid, caption=capt)
+                elif media_type == "photo":
+                    await context.bot.send_photo(chat_id=chat_id, photo=fid, caption=capt)
+                else:
+                    await context.bot.send_document(chat_id=chat_id, document=fid, caption=capt)
+            
         except Exception as e:
             print("Error kirim cached file:", e)
+            # Jika error, hapus cache biar retry download di lain waktu
             video_cache.pop(url, None)
             await update.message.reply_text(t("download_failed", chat_id=chat_id))
+        else:
+            print("Video sent from cache.")
         return
     
     # X (Twitter)
@@ -153,9 +167,9 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         if media_type == "video":
-            await send_video_file(update, context, result, url)
+            await send_video_file(update, context, result, url, video_cache=video_cache, t=t)
         elif media_type == "photo":
-            await send_photo_file(update, context, result, url)
+            await send_photo_file(update, context, result, url, video_cache=video_cache, t=t)
         else:
             # fallback kirim sebagai dokumen jika format gak dikenali
             await context.bot.send_document(chat_id=chat_id, document=open(result, "rb"))
@@ -171,7 +185,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(t("tiktok_download_error", chat_id=chat_id))
             return
         if media_type == "video":
-            await send_video_file(update, context, result, url)
+            await send_video_file(update, context, result, url, video_cache=video_cache, t=t)
         else:
             await update.message.reply_text(t("tiktok_failed", chat_id=chat_id))
         return
@@ -193,7 +207,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Kirim video jika ada
             if video_paths:
                 for path in video_paths:
-                    await send_video_file(update, context, path, url=None)
+                    await send_video_file(update, context, path, url, video_cache=video_cache, t=t)  
 
             # Kirim foto (jika lebih dari satu, kirim sebagai album)
             if image_paths:
@@ -252,7 +266,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 print("Download YouTube shorts error:", e)
                 await update.message.reply_text(t("download_failed", chat_id=chat_id))
                 return
-            await send_video_file(update, context, video_path, url)
+            await send_video_file(update, context, video_path, url, video_cache=video_cache, t=t)
         else:
             qualities = await asyncio.to_thread(get_available_qualities, url)
             if not qualities:
