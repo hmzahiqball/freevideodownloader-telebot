@@ -4,3 +4,7 @@ httpx
 aiohttp
 selenium
 requests
+pathlib
+nest_asyncio
+instaloader
+gallery-dl
