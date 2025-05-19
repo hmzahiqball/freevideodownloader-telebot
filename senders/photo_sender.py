@@ -14,15 +14,32 @@ async def send_photo_file(update, context, photo_path: str, url: str = None, vid
     with open(photo_path, "rb") as f:
         try:
             msg = await context.bot.send_photo(chat_id=chat_id, photo=f, caption=capt)
-            media_type = "photo"
+            
+            # Simpan ke cache jika ada URL
+            if url and msg and video_cache is not None:
+                if msg.photo:
+                    file_id = ("photo", msg.photo[-1].file_id)  # Gunakan ukuran terbesar
+                    video_cache[url] = file_id
+                    print("Foto Instagram disimpan di cache")
+                else:
+                    print("Gagal menyimpan foto ke cache - bukan tipe photo")
         except Exception as e:
             print("Telegram send photo error:", e)
             await update.message.reply_text(t("send_failed", chat_id=chat_id))
             return
 
-    if url and msg and (msg.photo or msg.video or msg.document) and video_cache is not None:
-        file_id = (media_type, (msg.video or msg.document or msg.photo[-1]).file_id)
+    if url and msg and video_cache is not None:
+        if msg.video:
+            file_id = ("video", msg.video.file_id)
+        elif msg.document:
+            file_id = ("document", msg.document.file_id)
+        elif msg.photo:
+            file_id = ("photo", msg.photo[-1].file_id)  # Use largest photo size
+        else:
+            return
+            
         video_cache[url] = file_id
+        print("File disimpan di cache")  # Added print statement
 
     print(f"Photo Sent {photo_path}")
     

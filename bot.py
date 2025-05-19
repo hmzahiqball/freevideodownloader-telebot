@@ -153,7 +153,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             video_cache.pop(url, None)
             await update.message.reply_text(t("download_failed", chat_id=chat_id))
         else:
-            print("Video sent from cache.")
+            print("Media sent from cache.")
         return
     
     # X (Twitter)
@@ -192,6 +192,34 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Instagram
     if "instagram.com" in url:
+        # Check if we have cached photos for this URL
+        cached_photos = [(k, v) for k, v in video_cache.items() if k.startswith(f"{url}_")]
+        if cached_photos:
+            cached_photos.sort(key=lambda x: int(x[0].split("_")[-1]))  # Sort by index
+            media_group = []
+            
+            for i, (cache_key, file_data) in enumerate(cached_photos):
+                media_type, file_id = file_data
+                if media_type != "photo":
+                    continue
+                    
+                if i == 0:
+                    media_group.append(InputMediaPhoto(file_id, caption="Downloaded By @FreeVideoDownloderBot"))
+                else:
+                    media_group.append(InputMediaPhoto(file_id))
+            
+            if media_group:
+                try:
+                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+                    await update.message.reply_media_group(media=media_group)
+                    print("Instagram media group sent from cache")
+                    return
+                except Exception as e:
+                    print("Error sending cached media group:", e)
+                    # Clean up invalid cache entries
+                    for cache_key, _ in cached_photos:
+                        video_cache.pop(cache_key, None)
+                    
         await update.message.reply_text(t("instagram_detected", chat_id=chat_id))
         try:
             file_paths = await asyncio.to_thread(download_instagram, url)
@@ -200,9 +228,14 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(t("download_failed", chat_id=chat_id))
                 return
 
-            # Filter hanya gambar
-            image_paths = [f for f in file_paths if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))]
+            # Kirim video jika ada (dengan cache)
             video_paths = [f for f in file_paths if f.lower().endswith(".mp4")]
+            if video_paths:
+                for path in video_paths:
+                    await send_video_file(update, context, path, url, video_cache=video_cache, t=t)  
+
+            # Kirim foto (dengan cache)
+            image_paths = [f for f in file_paths if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))]
 
             # Kirim video jika ada
             if video_paths:
@@ -227,7 +260,9 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 image_paths.sort(key=lambda x: os.path.getctime(x))
 
                 if len(image_paths) == 1:
-                    await send_photo_file(update, context, image_paths[0], url=url)
+                    await send_photo_file(update, context, image_paths[0], url=url, video_cache=video_cache, t=t)
+                    os.remove(path)
+                    cleanup_empty_dirs(os.path.dirname(path), stop_at="downloads")
                 else:
                     media_group = []
                     temp_files = []
@@ -241,6 +276,16 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             media_group.append(InputMediaPhoto(f))
                     
                     msgs = await update.message.reply_media_group(media=media_group)
+    
+                    # Cache each photo in the media group
+                    if url and video_cache is not None:
+                        for msg in msgs:
+                            if msg.photo:
+                                file_id = ("photo", msg.photo[-1].file_id)  # Gunakan ukuran terbesar
+                                # Create unique cache key for each photo in the group
+                                cache_key = f"{url}_{msgs.index(msg)}"  # Append index to make keys unique
+                                video_cache[cache_key] = file_id
+                                print(f"Foto Instagram {msgs.index(msg)} disimpan di cache")
                     
                     # Tutup file & hapus
                     for f, path in temp_files:
