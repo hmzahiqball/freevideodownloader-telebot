@@ -197,17 +197,17 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if cached_photos:
             cached_photos.sort(key=lambda x: int(x[0].split("_")[-1]))  # Sort by index
             media_group = []
-            
+
             for i, (cache_key, file_data) in enumerate(cached_photos):
                 media_type, file_id = file_data
                 if media_type != "photo":
                     continue
-                    
+
                 if i == 0:
                     media_group.append(InputMediaPhoto(file_id, caption="Downloaded By @FreeVideoDownloderBot"))
                 else:
                     media_group.append(InputMediaPhoto(file_id))
-            
+
             if media_group:
                 try:
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
@@ -244,61 +244,97 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # Kirim foto (jika lebih dari satu, kirim sebagai album)
             if image_paths:
-                # Ubah .webp ke .jpg agar bisa dikirim
+                # Convert .webp to .jpg and track which files we created
+                converted_files = {}
                 new_image_paths = []
+
                 for path in image_paths:
                     if path.lower().endswith(".webp"):
                         try:
                             new_path = convert_webp_to_jpg(path)
                             new_image_paths.append(new_path)
+                            converted_files[path] = new_path  # Track original → converted
+                            # Delete original .webp immediately after successful conversion
+                            try:
+                                os.remove(path)
+                                print(f"Deleted original .webp: {path}")
+                            except Exception as e:
+                                print(f"Warning: Could not delete original .webp {path}: {e}")
                         except Exception as e:
                             print(f"Gagal konversi {path}: {e}")
+                            # Fallback to original if conversion fails
+                            new_image_paths.append(path)
                     else:
                         new_image_paths.append(path)
-                image_paths = new_image_paths
 
+                image_paths = new_image_paths
                 image_paths.sort(key=lambda x: os.path.getctime(x))
 
                 if len(image_paths) == 1:
-                    await send_photo_file(update, context, image_paths[0], url=url, video_cache=video_cache, t=t)
-                    os.remove(path)
+                    path = image_paths[0]
+                    await send_photo_file(update, context, path, url=url, video_cache=video_cache, t=t)
+                    # Cleanup only the file we actually sent
+                    try:
+                        if os.path.exists(path):
+                            os.remove(path)
+                            print(f"Deleted single photo: {path}")
+                        # Also clean up original .webp if this was a converted file
+                        original_webp = next((k for k,v in converted_files.items() if v == path), None)
+                        if original_webp and os.path.exists(original_webp):
+                            os.remove(original_webp)
+                    except Exception as e:
+                        print(f"Cleanup error: {e}")
                     cleanup_empty_dirs(os.path.dirname(path), stop_at="downloads")
                 else:
                     media_group = []
                     temp_files = []
-                    
+
                     for i, path in enumerate(image_paths):
-                        f = open(path, 'rb')
-                        temp_files.append((f, path))
-                        if i == 0:
-                            media_group.append(InputMediaPhoto(f, caption=t("Downloaded By @FreeVideoDownloderBot", chat_id=chat_id)))
-                        else:
-                            media_group.append(InputMediaPhoto(f))
-                    
-                    msgs = await update.message.reply_media_group(media=media_group)
-    
-                    # Cache each photo in the media group
-                    if url and video_cache is not None:
-                        for msg in msgs:
-                            if msg.photo:
-                                file_id = ("photo", msg.photo[-1].file_id)  # Gunakan ukuran terbesar
-                                # Create unique cache key for each photo in the group
-                                cache_key = f"{url}_{msgs.index(msg)}"  # Append index to make keys unique
-                                video_cache[cache_key] = file_id
-                                print(f"Foto Instagram {msgs.index(msg)} disimpan di cache")
-                    
-                    # Tutup file & hapus
-                    for f, path in temp_files:
                         try:
-                            f.close()
-                            os.remove(path)
-                            cleanup_empty_dirs(os.path.dirname(path), stop_at="downloads")
+                            f = open(path, 'rb')
+                            temp_files.append((f, path))
+                            if i == 0:
+                                media_group.append(InputMediaPhoto(f, caption=t("Downloaded By @FreeVideoDownloderBot", chat_id=chat_id)))
+                            else:
+                                media_group.append(InputMediaPhoto(f))
                         except Exception as e:
-                            print(f"Gagal hapus {path}: {e}")
+                            print(f"Error opening {path}: {e}")
+                            continue
+                        
+                    try:
+                        msgs = await update.message.reply_media_group(media=media_group)
+
+                        # Cache each photo
+                        if url and video_cache is not None:
+                            for msg in msgs:
+                                if msg.photo:
+                                    file_id = ("photo", msg.photo[-1].file_id)
+                                    cache_key = f"{url}_{msgs.index(msg)}"
+                                    video_cache[cache_key] = file_id
+                                    print(f"Cached Instagram photo {msgs.index(msg)}")
+                    except Exception as e:
+                        print(f"Error sending media group: {e}")
+                    finally:
+                        # Cleanup all files
+                        for f, path in temp_files:
+                            try:
+                                f.close()
+                                if os.path.exists(path):
+                                    os.remove(path)
+                                    print(f"Deleted media group photo: {path}")
+                                # Clean up original .webp if this was a converted file
+                                original_webp = next((k for k,v in converted_files.items() if v == path), None)
+                                if original_webp and os.path.exists(original_webp):
+                                    os.remove(original_webp)
+                            except Exception as e:
+                                print(f"Cleanup error for {path}: {e}")
+
+                        # Cleanup directories
+                        if temp_files:
+                            cleanup_empty_dirs(os.path.dirname(temp_files[0][1]), stop_at="downloads")
             return
         except Exception as e:
             print("Download Instagram error:", e)
-            await update.message.reply_text(t("instagram_download_error", chat_id=chat_id))
             return
     
     # YouTube
