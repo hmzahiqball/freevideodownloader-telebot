@@ -1,2 +1,6 @@
 python-telegram-bot==20.7
 yt-dlp
+httpx
+aiohttp
+selenium
+requests
