@@ -8,3 +8,4 @@ pathlib
 nest_asyncio
 instaloader
 gallery-dl
+pillow
