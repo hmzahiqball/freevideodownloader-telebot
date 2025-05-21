@@ -48,7 +48,7 @@ async def send_video_file(update, context, video_path: str, url: str = None, vid
             return
             
         video_cache[url] = file_id
-        print("File disimpan di cache")  # Added print statement
+        print("Media saved to cache")
 
     print(f"Video Sent {video_path}")
 

@@ -2,7 +2,7 @@ import os
 import asyncio
 import json
 from pathlib import Path
-from telegram import Update, InputMediaPhoto
+from telegram import Update, InputMediaPhoto, InputMediaVideo
 from telegram.constants import ChatAction
 from telegram.request import HTTPXRequest
 from telegram.ext import (
@@ -47,7 +47,7 @@ AVAILABLE_LANGUAGES = {
 
 user_languages = {}  # chat_id -> lang_code
 user_sessions = {}   # chat_id -> {await_quality, qualities, url}
-video_cache = {}     # url -> (type, file_id)
+video_cache = {}     # url -> (type, file_id) or special keys for media groups
 
 
 def t(key: str, chat_id: int = None, **kwargs):
@@ -90,10 +90,41 @@ async def handle_language_selection(update: Update, context: ContextTypes.DEFAUL
     return ConversationHandler.END
 
 
+# --- Helper Functions ---
+async def send_media_group_from_cache(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str, media_type: str):
+    """Send media group from cache"""
+    chat_id = update.effective_chat.id
+    capt = "Downloaded By @FreeVideoDownloderBot"
+    
+    # Get media group items from cache
+    cache_key = f"{url}_{media_type}_mediagroup"
+    if cache_key not in video_cache:
+        return False
+    
+    media_group_data = video_cache[cache_key]
+    
+    # Prepare media group
+    media_group = []
+    for i, (item_type, file_id) in enumerate(media_group_data):
+        if item_type == "photo":
+            if i == 0:
+                media_group.append(InputMediaPhoto(file_id, caption=capt))
+            else:
+                media_group.append(InputMediaPhoto(file_id))
+    
+    if media_group:
+        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+        await update.message.reply_media_group(media=media_group)
+        return True
+    
+    return False
+
+
 # --- Main Handler ---
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text.strip()
     chat_id = update.effective_chat.id
+    capt = "Downloaded By @FreeVideoDownloderBot"
 
     # Cek apakah user sedang memilih kualitas
     if chat_id in user_sessions and user_sessions[chat_id].get("await_quality"):
@@ -123,60 +154,104 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_video_file(update, context, video_path, url_session, video_cache=video_cache, t=t)
         return
 
-    # Cek cache
-    if url in video_cache:
-        file_id = video_cache[url]
-        capt = "Downloaded By @FreeVideoDownloderBot"
-        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
-        try:
-            if isinstance(file_id, tuple):
-                # Kalau cache simpan (type, file_id)
-                media_type, fid = file_id
-                if media_type == "video":
-                    await context.bot.send_video(chat_id=chat_id, video=fid, caption=capt)
-                elif media_type == "photo":
-                    await context.bot.send_photo(chat_id=chat_id, photo=fid, caption=capt)
-                else:
-                    await context.bot.send_document(chat_id=chat_id, document=fid, caption=capt)
-            else:
-                # Cache lama, asumsi video
-                if media_type == "video":
-                    await context.bot.send_video(chat_id=chat_id, video=fid, caption=capt)
-                elif media_type == "photo":
-                    await context.bot.send_photo(chat_id=chat_id, photo=fid, caption=capt)
-                else:
-                    await context.bot.send_document(chat_id=chat_id, document=fid, caption=capt)
-            
-        except Exception as e:
-            print("Error kirim cached file:", e)
-            # Jika error, hapus cache biar retry download di lain waktu
-            video_cache.pop(url, None)
-            await update.message.reply_text(t("download_failed", chat_id=chat_id))
-        else:
-            print("Media sent from cache.")
-        return
-    
-    # X (Twitter)
+    # Handle X (Twitter)
     if "twitter.com" in url or "x.com" in url:
+        # Check if media group cache exists for this URL
+        photos_sent = await send_media_group_from_cache(update, context, url, "photo")
+        
+        # Check if video cache exists for this URL
+        video_cache_key = f"{url}_video"
+        if video_cache_key in video_cache:
+            media_type, file_id = video_cache[video_cache_key]
+            if photos_sent:
+                await asyncio.sleep(1)  # Small delay between media group and video
+            
+            await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+            await context.bot.send_video(chat_id=chat_id, video=file_id, caption=capt)
+            print("X media sent from cache.")
+            return
+            
+        # If we've sent photos but no video was cached or vice versa, continue downloading
+        if photos_sent:
+            print("X photos sent from cache, no video cached")
+            return
+        
         await update.message.reply_text(t("x_media_detected", chat_id=chat_id))
         try:
-            media_type, result = await asyncio.to_thread(download_x, url)
+            results = await asyncio.to_thread(download_x, url)
         except Exception as e:
             print("Download X error:", e)
             await update.message.reply_text(t("x_download_error", chat_id=chat_id))
             return
 
-        if media_type == "video":
-            await send_video_file(update, context, result, url, video_cache=video_cache, t=t)
-        elif media_type == "photo":
-            await send_photo_file(update, context, result, url, video_cache=video_cache, t=t)
-        else:
-            # fallback kirim sebagai dokumen jika format gak dikenali
-            await context.bot.send_document(chat_id=chat_id, document=open(result, "rb"))
+        # Separate photos and videos
+        photos = [r for r in results if r[0] == "photo"]
+        videos = [r for r in results if r[0] == "video"]
+        documents = [r for r in results if r[0] == "document"]
+        
+        # Send photos as media group if multiple
+        if len(photos) > 0:
+            if len(photos) > 1:
+                media_group = []
+                temp_files = []
+                for i, (_, path) in enumerate(photos):
+                    f = open(path, 'rb')
+                    temp_files.append((f, path))
+                    if i == 0:
+                        media_group.append(InputMediaPhoto(f, caption=capt))
+                    else:
+                        media_group.append(InputMediaPhoto(f))
+                
+                msgs = await update.message.reply_media_group(media=media_group)
+                
+                # Save to cache
+                media_group_cache = []
+                for i, msg in enumerate(msgs):
+                    if msg.photo:
+                        media_group_cache.append(("photo", msg.photo[-1].file_id))
+                
+                if media_group_cache:
+                    video_cache[f"{url}_photo_mediagroup"] = media_group_cache
+                
+                # Cleanup temp files
+                for f, path in temp_files:
+                    f.close()
+                    if os.path.exists(path):
+                        try:
+                            os.remove(path)
+                        except Exception as e:
+                            print(f"Error removing file {path}: {e}")
+            else:
+                # Single photo
+                await send_photo_file(update, context, photos[0][1], url, video_cache=video_cache, t=t)
+        
+        # Send videos
+        for _, video_path in videos:
+            # Add a small delay between media group and video
+            if photos:
+                await asyncio.sleep(1)
+            await send_video_file(update, context, video_path, f"{url}_video", video_cache=video_cache, t=t)
+            
+        # Send documents
+        for _, doc_path in documents:
+            await context.bot.send_document(chat_id=chat_id, document=open(doc_path, "rb"))
+            try:
+                os.remove(doc_path)
+            except Exception as e:
+                print(f"Error removing document {doc_path}: {e}")
+        
         return
 
     # TikTok
     if "tiktok.com" in url:
+        # Check cache
+        if url in video_cache:
+            media_type, file_id = video_cache[url]
+            await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+            await context.bot.send_video(chat_id=chat_id, video=file_id, caption=capt)
+            print("TikTok sent from cache.")
+            return
+            
         await update.message.reply_text(t("tiktok_media_detected", chat_id=chat_id))
         try:
             media_type, result = await asyncio.to_thread(download_tiktok, url)
@@ -192,153 +267,125 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Instagram
     if "instagram.com" in url:
-        # Check if we have cached photos for this URL
-        cached_photos = [(k, v) for k, v in video_cache.items() if k.startswith(f"{url}_")]
-        if cached_photos:
-            cached_photos.sort(key=lambda x: int(x[0].split("_")[-1]))  # Sort by index
-            media_group = []
-
-            for i, (cache_key, file_data) in enumerate(cached_photos):
-                media_type, file_id = file_data
-                if media_type != "photo":
-                    continue
-
-                if i == 0:
-                    media_group.append(InputMediaPhoto(file_id, caption="Downloaded By @FreeVideoDownloderBot"))
-                else:
-                    media_group.append(InputMediaPhoto(file_id))
-
-            if media_group:
-                try:
-                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
-                    await update.message.reply_media_group(media=media_group)
-                    print("Instagram media group sent from cache")
-                    return
-                except Exception as e:
-                    print("Error sending cached media group:", e)
-                    # Clean up invalid cache entries
-                    for cache_key, _ in cached_photos:
-                        video_cache.pop(cache_key, None)
-                    
+        # Check if media group cache exists for this URL
+        photos_sent = await send_media_group_from_cache(update, context, url, "photo")
+        
+        # Check if video cache exists for this URL
+        video_cache_key = f"{url}_video"
+        if video_cache_key in video_cache:
+            media_type, file_id = video_cache[video_cache_key]
+            if photos_sent:
+                await asyncio.sleep(1)  # Small delay between media group and video
+            
+            await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+            await context.bot.send_video(chat_id=chat_id, video=file_id, caption=capt)
+            print("Instagram video sent from cache.")
+            return
+            
+        # If we've sent photos but no video was cached or vice versa, continue downloading
+        if photos_sent:
+            print("Instagram photos sent from cache, no video cached")
+            return
+            
         await update.message.reply_text(t("instagram_detected", chat_id=chat_id))
         try:
             file_paths = await asyncio.to_thread(download_instagram, url)
 
-            if not file_paths:
-                await update.message.reply_text(t("download_failed", chat_id=chat_id))
-                return
-
-            # Kirim video jika ada (dengan cache)
             video_paths = [f for f in file_paths if f.lower().endswith(".mp4")]
-            if video_paths:
-                for path in video_paths:
-                    await send_video_file(update, context, path, url, video_cache=video_cache, t=t)  
-
-            # Kirim foto (dengan cache)
             image_paths = [f for f in file_paths if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))]
 
-            # Kirim video jika ada
-            if video_paths:
-                for path in video_paths:
-                    await send_video_file(update, context, path, url, video_cache=video_cache, t=t)  
+            # Convert .webp to .jpg and track which files we created
+            converted_files = {}
+            new_image_paths = []
 
-            # Kirim foto (jika lebih dari satu, kirim sebagai album)
-            if image_paths:
-                # Convert .webp to .jpg and track which files we created
-                converted_files = {}
-                new_image_paths = []
-
-                for path in image_paths:
-                    if path.lower().endswith(".webp"):
-                        try:
-                            new_path = convert_webp_to_jpg(path)
-                            new_image_paths.append(new_path)
-                            converted_files[path] = new_path  # Track original → converted
-                            # Delete original .webp immediately after successful conversion
-                            try:
-                                os.remove(path)
-                                print(f"Deleted original .webp: {path}")
-                            except Exception as e:
-                                print(f"Warning: Could not delete original .webp {path}: {e}")
-                        except Exception as e:
-                            print(f"Gagal konversi {path}: {e}")
-                            # Fallback to original if conversion fails
-                            new_image_paths.append(path)
-                    else:
+            for path in image_paths:
+                if path.lower().endswith(".webp"):
+                    try:
+                        new_path = convert_webp_to_jpg(path)
+                        new_image_paths.append(new_path)
+                        converted_files[path] = new_path  # Track original → converted
+                    except Exception as e:
+                        print(f"Gagal konversi {path}: {e}")
+                        # Fallback to original if conversion fails
                         new_image_paths.append(path)
+                else:
+                    new_image_paths.append(path)
 
-                image_paths = new_image_paths
-                image_paths.sort(key=lambda x: os.path.getctime(x))
+            image_paths = new_image_paths
+            image_paths.sort(key=lambda x: os.path.getctime(x))
 
+            # Send photos first
+            if len(image_paths) > 0:
                 if len(image_paths) == 1:
                     path = image_paths[0]
-                    await send_photo_file(update, context, path, url=url, video_cache=video_cache, t=t)
-                    # Cleanup only the file we actually sent
+                    await send_photo_file(update, context, path, url=f"{url}_photo_0", video_cache=video_cache, t=t)
+                    # Cleanup the file we sent
                     try:
                         if os.path.exists(path):
                             os.remove(path)
-                            print(f"Deleted single photo: {path}")
-                        # Also clean up original .webp if this was a converted file
-                        original_webp = next((k for k,v in converted_files.items() if v == path), None)
-                        if original_webp and os.path.exists(original_webp):
-                            os.remove(original_webp)
                     except Exception as e:
                         print(f"Cleanup error: {e}")
-                    cleanup_empty_dirs(os.path.dirname(path), stop_at="downloads")
-                else:
+                elif len(image_paths) > 1:
                     media_group = []
                     temp_files = []
-
                     for i, path in enumerate(image_paths):
-                        try:
-                            f = open(path, 'rb')
-                            temp_files.append((f, path))
-                            if i == 0:
-                                media_group.append(InputMediaPhoto(f, caption=t("Downloaded By @FreeVideoDownloderBot", chat_id=chat_id)))
-                            else:
-                                media_group.append(InputMediaPhoto(f))
-                        except Exception as e:
-                            print(f"Error opening {path}: {e}")
-                            continue
-                        
-                    try:
-                        msgs = await update.message.reply_media_group(media=media_group)
-
-                        # Cache each photo
-                        if url and video_cache is not None:
-                            for msg in msgs:
-                                if msg.photo:
-                                    file_id = ("photo", msg.photo[-1].file_id)
-                                    cache_key = f"{url}_{msgs.index(msg)}"
-                                    video_cache[cache_key] = file_id
-                                    print(f"Cached Instagram photo {msgs.index(msg)}")
-                    except Exception as e:
-                        print(f"Error sending media group: {e}")
-                    finally:
-                        # Cleanup all files
-                        for f, path in temp_files:
+                        f = open(path, 'rb')
+                        temp_files.append((f, path))
+                        if i == 0:
+                            media_group.append(InputMediaPhoto(f, caption=capt))
+                        else:
+                            media_group.append(InputMediaPhoto(f))
+                    
+                    msgs = await update.message.reply_media_group(media=media_group)
+                    
+                    # Save to cache for future use
+                    media_group_cache = []
+                    for i, msg in enumerate(msgs):
+                        if msg.photo:
+                            media_group_cache.append(("photo", msg.photo[-1].file_id))
+                    
+                    if media_group_cache:
+                        video_cache[f"{url}_photo_mediagroup"] = media_group_cache
+                    
+                    # Cleanup temp files
+                    for f, path in temp_files:
+                        f.close()
+                        if os.path.exists(path):
                             try:
-                                f.close()
-                                if os.path.exists(path):
-                                    os.remove(path)
-                                    print(f"Deleted media group photo: {path}")
-                                # Clean up original .webp if this was a converted file
-                                original_webp = next((k for k,v in converted_files.items() if v == path), None)
-                                if original_webp and os.path.exists(original_webp):
-                                    os.remove(original_webp)
+                                os.remove(path)
                             except Exception as e:
-                                print(f"Cleanup error for {path}: {e}")
+                                print(f"Error removing file {path}: {e}")
 
-                        # Cleanup directories
-                        if temp_files:
-                            cleanup_empty_dirs(os.path.dirname(temp_files[0][1]), stop_at="downloads")
+            # Send videos after photos
+            if video_paths:
+                # Add a small delay between media group and video
+                if image_paths:
+                    await asyncio.sleep(1)
+                    
+                for path in video_paths:
+                    await send_video_file(update, context, path, f"{url}_video", video_cache=video_cache, t=t)
+                    
+            # Clean up directories
+            for path in image_paths + video_paths:
+                if os.path.exists(os.path.dirname(path)):
+                    cleanup_empty_dirs(os.path.dirname(path), stop_at="downloads")
+                    
             return
         except Exception as e:
             print("Download Instagram error:", e)
+            await update.message.reply_text(t("download_failed", chat_id=chat_id))
             return
     
     # YouTube
     if "youtube.com" in url or "youtu.be" in url:
+        # Check single video cache first
+        if url in video_cache:
+            media_type, file_id = video_cache[url]
+            await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+            await context.bot.send_video(chat_id=chat_id, video=file_id, caption=capt)
+            print("YouTube video sent from cache.")
+            return
+            
         if is_shorts(url):
             await update.message.reply_text(t("youtube_shorts_detected", chat_id=chat_id))
             try:
@@ -364,6 +411,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(t("youtube_quality_selection", chat_id=chat_id, quality_list=quality_list))
         return
 
+    # If URL is not recognized
     await update.message.reply_text(t("ask_url", chat_id=chat_id))
 
 

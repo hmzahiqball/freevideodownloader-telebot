@@ -20,9 +20,9 @@ async def send_photo_file(update, context, photo_path: str, url: str = None, vid
                 if msg.photo:
                     file_id = ("photo", msg.photo[-1].file_id)  # Gunakan ukuran terbesar
                     video_cache[url] = file_id
-                    print("Foto Instagram disimpan di cache")
+                    print("Media saved to cache")
                 else:
-                    print("Gagal menyimpan foto ke cache - bukan tipe photo")
+                    print("Failed to save media to cache")
         except Exception as e:
             print("Telegram send photo error:", e)
             await update.message.reply_text(t("send_failed", chat_id=chat_id))
@@ -39,7 +39,7 @@ async def send_photo_file(update, context, photo_path: str, url: str = None, vid
             return
             
         video_cache[url] = file_id
-        print("File disimpan di cache")  # Added print statement
+        print("Media saved to cache")
 
     print(f"Photo Sent {photo_path}")
     
@@ -49,9 +49,7 @@ def cleanup_empty_dirs(path, stop_at="downloads"):
             break  # Folder tidak kosong atau bukan direktori
         try:
             os.rmdir(path)
-            print(f"Hapus folder kosong: {path}")
         except Exception as e:
-            print(f"Gagal hapus folder {path}: {e}")
             break
         path = os.path.dirname(path)
         if os.path.basename(path) == stop_at:
