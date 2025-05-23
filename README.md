@@ -40,17 +40,17 @@
 
 ✅ **Multi-Language Support**  
 Choose from 11 languages:  
-• **English**  
-• **Indonesia**  
-• **Español**  
-• **Français**  
-• **Germany**  
-• **Portuguese**  
-• **Russian**  
-• **Korean**  
-• **Chinese**  
-•  **Japanese**  
-•  **Arabic**  
+• English
+• Indonesia
+• Español
+• Français
+• Germany
+• Portuguese
+• Russian
+• Korean
+• Chinese
+• Japanese
+• Arabic
 ---
 
 ## 🛠 Tech Stack
