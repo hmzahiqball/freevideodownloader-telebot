@@ -1,5 +1,7 @@
 # 🎬 FreeVideoDownloderBot - Telegram Bot for Media Downloads
 
+![Screenshot](screenshot.png)
+
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-blueviolet)
 ![License](https://img.shields.io/github/license/yourusername/FreeVideoDownloderBot)
@@ -36,6 +38,19 @@
 • Choose from **multiple quality options** (360p, 720p, 1080p, etc).  
 • Download high-quality YouTube videos without watermarks.
 
+✅ **Multi-Language Support**  
+Choose from 11 languages:  
+• **English**  
+• **Indonesia**  
+• **Español**  
+• **Français**  
+• **Germany**  
+• **Portuguese**  
+• **Russian**  
+• **Korean**  
+• **Chinese**  
+•  **Japanese**  
+•  **Arabic**  
 ---
 
 ## 🛠 Tech Stack
