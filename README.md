@@ -22,35 +22,35 @@
 ## 📦 Features
 
 ✅ **X (formerly Twitter)**  
-• Download both **videos** and **photos** from public X posts.
+- Download both **videos** and **photos** from public X posts.
 
 ✅ **Instagram**  
-• Download **videos** and **photos** from Instagram posts and reels.
+- Download **videos** and **photos** from Instagram posts and reels.
 
 ✅ **TikTok**  
-• Download **videos** from regular TikTok posts (non-slideshow).  
-• *(TikTok slideshows support is in development.)*
+- Download **videos** from regular TikTok posts (non-slideshow).  
+- *(TikTok slideshows support is in development.)*
 
 ✅ **YouTube Shorts**  
-• Download **YouTube Shorts** videos instantly.
+- Download **YouTube Shorts** videos instantly.
 
 ✅ **YouTube (Full Videos)**  
-• Choose from **multiple quality options** (360p, 720p, 1080p, etc).  
-• Download high-quality YouTube videos without watermarks.
+- Choose from **multiple quality options** (360p, 720p, 1080p, etc).  
+- Download high-quality YouTube videos without watermarks.
 
 ✅ **Multi-Language Support**  
 Choose from 11 languages:  
-• English
-• Indonesia
-• Español
-• Français
-• Germany
-• Portuguese
-• Russian
-• Korean
-• Chinese
-• Japanese
-• Arabic
+- English
+- Indonesia
+- Español
+- Français
+- Germany
+- Portuguese
+- Russian
+- Korean
+- Chinese
+- Japanese
+- Arabic
 ---
 
 ## 🛠 Tech Stack
