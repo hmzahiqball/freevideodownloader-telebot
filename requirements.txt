@@ -9,3 +9,4 @@ nest_asyncio
 instaloader
 gallery-dl
 pillow
+spotdl

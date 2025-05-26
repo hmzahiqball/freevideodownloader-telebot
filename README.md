@@ -38,6 +38,9 @@
 - Choose from **multiple quality options** (360p, 720p, 1080p, etc).  
 - Download high-quality YouTube videos without watermarks.
 
+✅ **Spotify**   
+- Download high-quality songs from spotify.
+
 ✅ **Multi-Language Support**  
 Choose from 11 languages:  
 - English
@@ -60,6 +63,7 @@ Choose from 11 languages:
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [Selenium (for TikTok slideshows)](https://www.selenium.dev/)
 - AsyncIO + multithreading for performance
+- [spotDL (for Spotify download)](https://github.com/spotDL/spotify-downloader/)
 
 ---
 
