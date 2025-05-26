@@ -12,47 +12,14 @@ from telegram.ext import (
 )
 from downloader.youtube import download_youtube
 from senders.video_sender import send_video_file
-from handlers.handle_language import handle_language_selection, handle_language_command
+# from handlers.handle_language import handle_language_selection, handle_language_command
 from handlers.handle_x import handle_x
 from handlers.handle_tiktok import handle_tiktok
 from handlers.handle_instagram import handle_instagram
 from handlers.handle_youtube import handle_youtube
+from handlers.handle_spotify import handle_spotify
+from state import t, video_cache, audio_cache, user_sessions, user_languages, LANGUAGE_CHOICE, handle_language_selection, handle_language_command
 from config import BOT_TOKEN
-
-# --- Setup ---
-os.makedirs("downloads", exist_ok=True)
-
-with open("lang.json", "r", encoding="utf-8") as f:
-    LANG_DATA = json.load(f)
-
-DEFAULT_LANG = "en"
-
-LANGUAGE_CHOICE = 1
-
-AVAILABLE_LANGUAGES = {
-    "English": "en",
-    "Indonesia": "id",
-    "Español": "es",
-    "Français": "fr",
-    "Germany": "de",
-    "Portuguese": "pt",
-    "Russian": "ru",
-    "Korean": "ko",
-    "Chinese": "zh",
-    "Japanese": "ja",
-    "Arabic": "ar"
-}
-
-user_languages = {}  # chat_id -> lang_codea
-user_sessions = {}   # chat_id -> {await_quality, qualities, url}a
-video_cache = {}     # url -> (type, file_id) or special keys for media groupsa
-
-
-def t(key: str, chat_id: int = None, **kwargs):
-    lang = user_languages.get(chat_id, DEFAULT_LANG) if chat_id else DEFAULT_LANG
-    template = LANG_DATA.get(lang, {}).get(key) or LANG_DATA[DEFAULT_LANG].get(key, key)
-    return template.format(**kwargs)
-
 
 # --- Command Handlers ---
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -110,6 +77,11 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # YouTube
     if "youtube.com" in url or "youtu.be" in url:
         await handle_youtube(update, context, url, capt)
+        return
+    
+    # Spotify
+    if "open.spotify.com" in url:
+        await handle_spotify(update, context, url, capt)
         return
 
     # If URL is not recognized

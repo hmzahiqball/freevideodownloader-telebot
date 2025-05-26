@@ -1,38 +1,8 @@
 import asyncio
-import json
 from telegram.constants import ChatAction
 from downloader.youtube import download_youtube, get_available_qualities, is_shorts
 from senders.video_sender import send_video_file
-
-with open("lang.json", "r", encoding="utf-8") as f:
-    LANG_DATA = json.load(f)
-
-DEFAULT_LANG = "en"
-
-LANGUAGE_CHOICE = 1
-
-AVAILABLE_LANGUAGES = {
-    "English": "en",
-    "Indonesia": "id",
-    "Español": "es",
-    "Français": "fr",
-    "Germany": "de",
-    "Portuguese": "pt",
-    "Russian": "ru",
-    "Korean": "ko",
-    "Chinese": "zh",
-    "Japanese": "ja",
-    "Arabic": "ar"
-}
-
-user_languages = {}  # chat_id -> lang_code
-user_sessions = {}   # chat_id -> {await_quality, qualities, url}a
-video_cache = {}     # url -> (type, file_id) or special keys for media groups
-
-def t(key: str, chat_id: int = None, **kwargs):
-    lang = user_languages.get(chat_id, DEFAULT_LANG) if chat_id else DEFAULT_LANG
-    template = LANG_DATA.get(lang, {}).get(key) or LANG_DATA[DEFAULT_LANG].get(key, key)
-    return template.format(**kwargs)
+from state import t, video_cache, user_sessions
 
 async def handle_youtube(update, context, url, capt):
     # Check single video cache first

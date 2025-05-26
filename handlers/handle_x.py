@@ -1,41 +1,12 @@
 import os
 import asyncio
-import json
 from telegram import InputMediaPhoto
 from telegram.constants import ChatAction
 from downloader.x import download_x
 from senders.video_sender import send_video_file
 from senders.photo_sender import send_photo_file
 from senders.media_group_sender import send_media_group_from_cache
-
-with open("lang.json", "r", encoding="utf-8") as f:
-    LANG_DATA = json.load(f)
-
-DEFAULT_LANG = "en"
-
-LANGUAGE_CHOICE = 1
-
-AVAILABLE_LANGUAGES = {
-    "English": "en",
-    "Indonesia": "id",
-    "Español": "es",
-    "Français": "fr",
-    "Germany": "de",
-    "Portuguese": "pt",
-    "Russian": "ru",
-    "Korean": "ko",
-    "Chinese": "zh",
-    "Japanese": "ja",
-    "Arabic": "ar"
-}
-
-user_languages = {}  # chat_id -> lang_code
-video_cache = {}     # url -> (type, file_id) or special keys for media groups
-
-def t(key: str, chat_id: int = None, **kwargs):
-    lang = user_languages.get(chat_id, DEFAULT_LANG) if chat_id else DEFAULT_LANG
-    template = LANG_DATA.get(lang, {}).get(key) or LANG_DATA[DEFAULT_LANG].get(key, key)
-    return template.format(**kwargs)
+from state import t, video_cache
 
 async def handle_x(update, context, url, capt):
     # Check if media group cache exists for this URL
