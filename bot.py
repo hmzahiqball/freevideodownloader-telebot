@@ -18,6 +18,7 @@ from handlers.handle_tiktok import handle_tiktok
 from handlers.handle_instagram import handle_instagram
 from handlers.handle_youtube import handle_youtube
 from handlers.handle_spotify import handle_spotify
+from handlers.handle_soundcloud import handle_soundcloud
 from state import t, video_cache, audio_cache, user_sessions, user_languages, LANGUAGE_CHOICE, handle_language_selection, handle_language_command
 from config import BOT_TOKEN
 
@@ -82,6 +83,11 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Spotify
     if "open.spotify.com" in url:
         await handle_spotify(update, context, url, capt)
+        return
+    
+    # Soundcloud
+    if "soundcloud.com" in url:
+        await handle_soundcloud(update, context, url, capt)
         return
 
     # If URL is not recognized

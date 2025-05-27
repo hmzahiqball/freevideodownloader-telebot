@@ -48,7 +48,7 @@ async def handle_instagram(update, context, url, capt):
                     new_image_paths.append(new_path)
                     converted_files[path] = new_path  # Track original → converted
                 except Exception as e:
-                    print(f"Gagal konversi {path}: {e}")
+                    print(f"Convert failed {path}: {e}")
                     # Fallback to original if conversion fails
                     new_image_paths.append(path)
             else:

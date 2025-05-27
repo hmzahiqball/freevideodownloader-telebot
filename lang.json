@@ -23,7 +23,10 @@
     "language_usage": "Mau ganti bahasa? Kirim aja command kayak gini: /lang id 🧠",
     "spotify_detected": "🔄 Link Spotify masukkk, bentar gua proses yaa 🎶",
     "spotify_download_error": "❌ Gagal download lagunya dari Spotify. Coba lagi bro 🥲",
-    "spotify_failed": "❌ Gagal ambil audionya. Link-nya valid ga tuh bro? 🤨"
+    "spotify_failed": "❌ Gagal ambil audionya. Link-nya valid ga tuh bro? 🤨",
+    "soundcloud_detected": "🔊 SoundCloud-nya ke-detect bro, bentar gua siapin lagunya dulu 🎧",
+    "soundcloud_download_error": "❌ Error pas download dari SoundCloud cuy, coba lagi yak 😵‍💫",
+    "soundcloud_failed": "❌ Gagal total ambil lagu dari SoundCloud. Link-nya bener gak tuh bro? 😬"
   },
   "en": {
     "ask_url": "yo drop that link bruh, let’s snatch that vid 🔗",
@@ -49,7 +52,10 @@
     "language_usage": "wanna switch it up? drop /lang en or whatever u want 🎛️",
     "spotify_detected": "🔄 Spotify link spotted 👀 cooking up that track rn 🎶",
     "spotify_download_error": "couldn’t grab the Spotify song 😓 try again in a bit",
-    "spotify_failed": "Spotify said nope 😵‍💫 that link might be sus bruv"
+    "spotify_failed": "Spotify said nope 😵‍💫 that link might be sus bruv",
+    "soundcloud_detected": "🔊 SoundCloud link spotted, hang tight while I prep the track 🎧",
+    "soundcloud_download_error": "❌ Uh-oh, had a hiccup downloading from SoundCloud. Try again later 😵‍💫",
+    "soundcloud_failed": "❌ Couldn't fetch the SoundCloud track. You sure that link's legit? 😬"
   },
   "es": {
     "ask_url": "Ey, mándame ese link pa' bajarlo 🎯",
@@ -75,7 +81,10 @@
     "language_usage": "¿Quieres cambiar idioma? Manda /lang es o el que quieras 🌍",
     "spotify_detected": "🔄 Link de Spotify detectado, un momento que lo proceso 🎶",
     "spotify_download_error": "❌ No pude descargar la rola de Spotify. Intenta de nuevo, bro 🥲",
-    "spotify_failed": "❌ No pude agarrar el audio. ¿El link está bien, bro? 🤨"
+    "spotify_failed": "❌ No pude agarrar el audio. ¿El link está bien, bro? 🤨",
+    "soundcloud_detected": "🔊 Se viene rola de SoundCloud, aguanta que la preparo 🎧",
+    "soundcloud_download_error": "❌ Ups, falló la descarga de SoundCloud. Intenta de nuevo bro 😵‍💫",
+    "soundcloud_failed": "❌ No pude conseguir la rola de SoundCloud. ¿El link está bien o qué? 😬"
   },
   "fr": {
     "ask_url": "Hey, balance-moi le lien de la vidéo stp 🎯",
@@ -101,7 +110,10 @@
     "language_usage": "Pour changer la langue, envoie /lang fr ou une autre 🌍",
     "spotify_detected": "🔄 Lien Spotify détecté, attends un peu, j’m’occupe du truc 🎶",
     "spotify_download_error": "❌ Échec du téléchargement de la track Spotify. Réessaie, mec 🥲",
-    "spotify_failed": "❌ J’ai pas pu choper l’audio. Ton lien est bon, frère ? 🤨"
+    "spotify_failed": "❌ J’ai pas pu choper l’audio. Ton lien est bon, frère ? 🤨",
+    "soundcloud_detected": "🔊 Yo, SoundCloud repéré ! Laisse-moi préparer le son 🎧",
+    "soundcloud_download_error": "❌ Oups, p’tit souci pour DL depuis SoundCloud. Réessaye mec 😵‍💫",
+    "soundcloud_failed": "❌ J’ai pas réussi à choper le son. Le lien est chelou ou quoi ? 😬"
   },
   "de": {
     "ask_url": "Hey, schick mir mal den Link zum Video, klar? 🎯",
@@ -127,7 +139,10 @@
     "language_usage": "Willst du die Sprache ändern? Schick /lang de oder 'nen anderen Code 🌍",
     "spotify_detected": "🔄 Spotify-Link reingekommen, warte kurz, ich kümmere mich drum 🎶",
     "spotify_download_error": "❌ Spotify-Song konnte nicht geladen werden. Versuch’s nochmal, Bro 🥲",
-    "spotify_failed": "❌ Audio konnte nicht geholt werden. Ist der Link echt, Alter? 🤨"
+    "spotify_failed": "❌ Audio konnte nicht geholt werden. Ist der Link echt, Alter? 🤨",
+    "soundcloud_detected": "🔊 Yo, SoundCloud-Link am Start! Gib mir 'nen Moment, ich mach den Track klar 🎧",
+    "soundcloud_download_error": "❌ Uff, beim Download von SoundCloud ist was schiefgelaufen. Versuch’s nochmal, Bro 😵‍💫",
+    "soundcloud_failed": "❌ Konnte den Track nicht holen. Bist du sicher, dass der Link korrekt ist? 😬"
   },
   "pt": {
     "ask_url": "E aí, manda aí o link do vídeo pra eu baixar, beleza? 🎯",
@@ -153,7 +168,10 @@
     "language_usage": "Quer mudar o idioma? Manda /lang pt ou outro código 🌍",
     "spotify_detected": "🔄 Link do Spotify chegou, já vou processar aqui 🎶",
     "spotify_download_error": "❌ Falha ao baixar a música do Spotify. Tenta de novo, mano 🥲",
-    "spotify_failed": "❌ Não consegui pegar o áudio. Será que o link tá válido, mano? 🤨"
+    "spotify_failed": "❌ Não consegui pegar o áudio. Será que o link tá válido, mano? 🤨",
+    "soundcloud_detected": "🔊 Eita! Link do SoundCloud detectado. Calma aí que já vou preparar o som 🎧",
+    "soundcloud_download_error": "❌ Vixi, deu ruim pra baixar do SoundCloud. Tenta de novo depois, beleza? 😵‍💫",
+    "soundcloud_failed": "❌ Não rolou pegar a música do SoundCloud. Esse link tá certo mesmo? 😬"
   },
   "ru": {
     "ask_url": "Эй, скинь ссылку на видос для скачивания, ну давай! 🎥",
@@ -179,7 +197,10 @@
     "language_usage": "Хочешь сменить язык? Отправь команду типа /lang ru 🌐",
     "spotify_detected": "🔄 Спотифай линки прилетели, ща обрабатываю 🎶",
     "spotify_download_error": "❌ Не удалось скачать трек со Спотифая. Попробуй ещё раз, братан 🥲",
-    "spotify_failed": "❌ Не смог получить аудио. Ссылка точно нормальная, чувак? 🤨"
+    "spotify_failed": "❌ Не смог получить аудио. Ссылка точно нормальная, чувак? 🤨",
+    "soundcloud_detected": "🔊 Опа, ссылочка на SoundCloud засечена! Ща трек подвезу 🎧",
+    "soundcloud_download_error": "❌ Эээ, траблы с загрузкой из SoundCloud. Попробуй ещё раз, бро 😵‍💫",
+    "soundcloud_failed": "❌ Не смог достать трек с SoundCloud. Ссылка норм вообще? 😬"
   },
   "ko": {
     "ask_url": "비디오 URL 좀 보내줘, 다운받아야지! 🎥",
@@ -205,7 +226,10 @@
     "language_usage": "언어 바꾸려면 /lang ko 처럼 명령어 보내줘! 🌐",
     "spotify_detected": "🔄 스포티파이 링크 왔어, 잠깐만 처리할게 🎶",
     "spotify_download_error": "❌ 스포티파이에서 노래 다운 실패했어. 다시 한 번 시도해봐 🥲",
-    "spotify_failed": "❌ 오디오 못 받았어. 링크 진짜 맞아? 🤨"
+    "spotify_failed": "❌ 오디오 못 받았어. 링크 진짜 맞아? 🤨",
+    "soundcloud_detected": "🔊 오우! 사운드클라우드 링크 발견~ 곧 노래 준비할게요 🎧",
+    "soundcloud_download_error": "❌ 앗, 사운드클라우드에서 다운로드 에러났어. 다시 시도해봐 bro 😵‍💫",
+    "soundcloud_failed": "❌ 사운드클라우드에서 트랙 못 가져왔어. 링크 제대로 된 거 맞아? 😬"
   },
   "zh": {
     "ask_url": "请发我视频的URL，准备下载啦！🎥",
@@ -231,7 +255,10 @@
     "language_usage": "要换语言，发像 /lang zh 这样的命令就行啦！🌐",
     "spotify_detected": "🔄 收到Spotify链接啦，马上帮你处理🎶",
     "spotify_download_error": "❌ 从Spotify下载歌失败了，重试一下呗🥲",
-    "spotify_failed": "❌ 音频没拿到，链接确定没问题？🤨"
+    "spotify_failed": "❌ 音频没拿到，链接确定没问题？🤨",
+    "soundcloud_detected": "🔊 哥们，发现SoundCloud链接啦，马上准备歌单 🎧",
+    "soundcloud_download_error": "❌ 哎呀，下载SoundCloud出错了，稍后再试吧 😵‍💫",
+    "soundcloud_failed": "❌ 取不到SoundCloud的歌，链接确定没问题吗？😬"
   },
   "ja": {
     "ask_url": "動画のURLちょーだい！ダウンロードするよ〜📥",
@@ -257,7 +284,10 @@
     "language_usage": "/lang jaとか送れば言語切り替えできるよ！使ってみてね！✨",
     "spotify_detected": "🔄 スポティファイのリンク来た〜！ちょっと待っててね🎶",
     "spotify_download_error": "❌ スポティファイから曲のダウンロード失敗した〜。もう一回試してみて🥲",
-    "spotify_failed": "❌ オーディオ取れなかったよ？リンクちゃんとしてる？🤨"
+    "spotify_failed": "❌ オーディオ取れなかったよ？リンクちゃんとしてる？🤨",
+    "soundcloud_detected": "🔊 ヤバい、SoundCloudのリンク見つけたぜ！今から曲用意するっしょ🎧",
+    "soundcloud_download_error": "❌ あちゃ〜、SoundCloudからのダウンロード失敗っす…また試してくれよな😵‍💫",
+    "soundcloud_failed": "❌ マジで曲ゲットできなかったわ。リンクちゃんとしてんの？😬"
   },
   "ar": {
     "ask_url": "أرسل لي رابط الفيديو اللي تبي تحمّله، يلا 🚀",
@@ -283,7 +313,10 @@
     "language_usage": "تقدر تختار اللغة بإرسال أمر زي /lang ar، جربها 😉",
     "spotify_detected": "🔄 جالك لينك سبوتيفاي، انتظر شويه بدوّر لك على الموسيقى 🎶",
     "spotify_download_error": "❌ ما قدرت أنزل الأغنية من سبوتيفاي، جرب مرة ثانية يا بطل 🥲",
-    "spotify_failed": "❌ ما حصلت الصوت، الرابط صح عندك ولا؟ 🤨"
+    "spotify_failed": "❌ ما حصلت الصوت، الرابط صح عندك ولا؟ 🤨",
+    "soundcloud_detected": "🔊 يلاا، لقيت لينك ساوندكلاود! استنى شوي بحضّر الأغنية 🎧",
+    "soundcloud_download_error": "❌ يا خوي، صار خطأ بتحميل من ساوندكلاود. جرّب مرة ثانية 😵‍💫",
+    "soundcloud_failed": "❌ ما قدرت أحصل الأغنية من ساوندكلاود. الرابط تمام ولا لا؟ 😬"
   }
 }
 
