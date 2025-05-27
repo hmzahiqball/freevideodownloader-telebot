@@ -10,3 +10,4 @@ instaloader
 gallery-dl
 pillow
 spotdl
+python-dotenv
