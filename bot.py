@@ -20,7 +20,9 @@ from handlers.handle_youtube import handle_youtube
 from handlers.handle_spotify import handle_spotify
 from handlers.handle_soundcloud import handle_soundcloud
 from state import t, video_cache, audio_cache, user_sessions, user_languages, LANGUAGE_CHOICE, handle_language_selection, handle_language_command
-from config import BOT_TOKEN
+from dotenv import load_dotenv
+load_dotenv()
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 # --- Command Handlers ---
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
